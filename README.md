@@ -1,1 +1,106 @@
-# VLV
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtuális Lóverseny Kalkulátor</title>
+    <!-- A Tailwind CSS behozatala a dizájnhoz -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-800">Virtuális Lóverseny Stratégia Kalkulátor</h1>
+        
+        <div class="mb-6 flex flex-col md:flex-row justify-center items-center gap-4">
+            <div class="w-full md:w-auto">
+                <label for="oddsInput" class="block text-sm font-medium text-gray-700 mb-1">Milyen oddsra akarsz fogadni? (pl. 4, 5, 6, 7, 8 vagy 9):</label>
+                <input type="number" id="oddsInput" step="0.1" class="border border-gray-300 rounded px-4 py-2 w-full md:w-64 focus:outline-none focus:border-blue-500" placeholder="Írd be az oddsot (pl. 9)...">
+            </div>
+            <button onclick="szamol()" class="bg-blue-600 text-white font-bold px-6 py-2 rounded hover:bg-blue-700 transition w-full md:w-auto mt-5 md:mt-0">
+                Kiszámol
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="py-3 px-4 border-b text-left">Kör</th>
+                        <th class="py-3 px-4 border-b text-left">Tét (Ft)</th>
+                        <th class="py-3 px-4 border-b text-left">Összköltség (Ft)</th>
+                        <th class="py-3 px-4 border-b text-left">Nyeremény (Ft)</th>
+                        <th class="py-3 px-4 border-b text-left">Tiszta haszon (Ft)</th>
+                    </tr>
+                </thead>
+                <tbody id="eredmenyTabla" class="text-gray-700">
+                    <!-- Ide generálja a program a sorokat -->
+                    <tr>
+                        <td colspan="5" class="py-4 text-center italic text-gray-500">Írj be egy oddsot fent, és kattints a Kiszámol gombra!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function szamol() {
+            const oddsInput = document.getElementById('oddsInput').value;
+            const odds = parseFloat(oddsInput);
+            const tablaBody = document.getElementById('eredmenyTabla');
+            
+            // Hibakezelés, ha nem jó számot adnak meg
+            if (isNaN(odds) || odds <= 1) {
+                alert('Kérlek, adj meg egy érvényes oddsot (aminek az értéke nagyobb, mint 1)!');
+                return;
+            }
+
+            tablaBody.innerHTML = ''; // Előző eredmények törlése
+
+            const alaptet = 1000;
+            const maximumKor = 30;
+            
+            let osszesenElkoltve = 0;
+            let aktualisSzorzo = 1;
+            let aktualisTet = alaptet;
+
+            for (let kor = 1; kor <= maximumKor; kor++) {
+                // Meddig elég a jelenlegi tét?
+                // Ha a várható nyeremény nem fedezi az eddigi költséget + mostani tétet, emelni kell
+                while ((aktualisTet * odds) < (osszesenElkoltve + aktualisTet)) {
+                    aktualisSzorzo++;
+                    aktualisTet = alaptet * aktualisSzorzo;
+                }
+
+                osszesenElkoltve += aktualisTet;
+                const nyeremeny = Math.floor(aktualisTet * odds);
+                const tisztaHaszon = nyeremeny - osszesenElkoltve;
+
+                // Sor létrehozása a táblázatba
+                const sor = document.createElement('tr');
+                
+                // Formázás: kiemeljük azokat a sorokat, ahol a haszon éppen 0
+                if (tisztaHaszon === 0) {
+                    sor.className = "bg-yellow-200 font-bold"; // Nullszaldó kiemelése
+                } else if (kor % 2 === 0) {
+                    sor.className = "bg-gray-50"; // Páros sorok halvány szürkék
+                } else {
+                    sor.className = "bg-white"; // Páratlan sorok fehérek
+                }
+
+                // Színek beállítása a tiszta haszonhoz
+                const haszonSzin = tisztaHaszon === 0 ? 'text-gray-800' : 'text-green-600 font-bold';
+
+                sor.innerHTML = `
+                    <td class="py-2 px-4 border-b border-gray-200">${kor}.</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${aktualisTet} Ft</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${osszesenElkoltve} Ft</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${nyeremeny} Ft</td>
+                    <td class="py-2 px-4 border-b border-gray-200 ${haszonSzin}">${tisztaHaszon} Ft</td>
+                `;
+                
+                tablaBody.appendChild(sor);
+            }
+        }
+    </script>
+</body>
+</html>
